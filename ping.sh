@@ -1,5 +1,5 @@
 #!/bin/bash
-#---HS 30May19---
+##-----HS 30May19-----
 #Script to ping the ip address in the list and print result in one line.
 #useage: ./ping.sh < list.txt
 while read line;
