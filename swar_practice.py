@@ -1,4 +1,6 @@
-# HS 03May21
+#!/usr/bin/python3
+
+#-----HS 14May19-----
 
 import time
 
@@ -61,3 +63,9 @@ def reaz_regular():
     reaz_func(i)
     time.sleep(1)
     print()
+
+
+if __name__ == "__main__":
+  reaz1()
+  reaz2()
+  reaz_regular()
