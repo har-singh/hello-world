@@ -11,14 +11,14 @@
 
 RED='\033[0;31m'
 NC='\033[0m' # No Color
-#printf "Color ${RED}red${NC} Thanks Stack Overflow\n"
+printf "Color ${RED}red${NC} Thanks Stack Overflow\n"
 
 while read line;
 do
   if ping -c1 -w 2 $line &> /dev/null
   then
-    printf "${RED}${line}\tNOK${NC}\n" # exit code 1
-  else
     printf "${line}\tOK\n" # exit code 0
+  else
+    printf "${RED}${line}\tNOK${NC}\n" # exit code 1
   fi
 done
