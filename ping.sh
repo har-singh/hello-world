@@ -11,7 +11,7 @@
 
 RED='\033[0;31m'
 NC='\033[0m' # No Color
-printf "Color ${RED}red${NC} Thanks Stack Overflow\n"
+#printf "Color ${RED}red${NC} Thanks Stack Overflow\n"
 
 while read line;
 do
