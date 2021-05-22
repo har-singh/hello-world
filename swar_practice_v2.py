@@ -31,6 +31,14 @@ def render_pattern_reverse(pattern):
       break
   print()
 
+def reaz_func(length=3):
+  #default is 1-2-3
+  pattern_list = []
+  for i in range(length):
+    pattern_list.append(i)
+  return(pattern_list)
+
+
 
 if __name__ == "__main__":
   print("ਸਰਗਮ ਰਿਆਜ਼ ੧")
@@ -41,9 +49,11 @@ if __name__ == "__main__":
   render_pattern([1, 2, 1])   # ਸਾਰੇਸਾ 1-2-1
   render_pattern_reverse([1, 2, 1])
 #
-  print("ਸਰਗਮ ਰਿਆਜ਼ ੩-੭")
-  render_pattern([1, 2, 3])   # ਸਾਰੇਗਾ 1-2-3
-  render_pattern_reverse([1, 2, 3])   # ਸਾਰੇਗਾ 1-2-3
+  for i in range(3,8):
+    print(f'ਸਰਗਮ ਰਿਆਜ਼  {i}')
+    render_pattern(reaz_func(i))   # ਸਾਰੇਗਾ 1-2-3
+    render_pattern_reverse(reaz_func(i))   # ਸਾਰੇਗਾ 1-2-3
+    time.sleep(1)
 #
   print("ਸਰਗਮ ਰਿਆਜ਼ ੮")
   render_pattern([1, 3])      # ਸਾਰੇ 1-3
