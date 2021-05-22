@@ -16,11 +16,10 @@ def render_pattern(pattern):
       print(base[index], end='')
     print()
     if max(pattern) + i >= len(base):
-      print('BREAK')
       break
+  print()
 
 def render_pattern_reverse(pattern):
-  print(f'{pattern}')
   for i in range(len(base)):
     for j in range(len(pattern)):
       index = i + pattern[j] - 1
@@ -29,8 +28,8 @@ def render_pattern_reverse(pattern):
       print(base[reverse_index], end='')
     print()
     if max(pattern) + i >= len(base):
-      print('BREAK')
       break
+  print()
 
 
 if __name__ == "__main__":
