@@ -177,6 +177,45 @@ def reaz12():
 #------------------------------------------
 
 
+def reaz13():
+  base_reaz_13 = ['ਨੀ'] + base + ['ਰੇ']
+  for i in range(1, len(base_reaz_13)):
+    print(base_reaz_13[i], end=' ')
+    print(base_reaz_13[i-1], end=' ')
+    print(base_reaz_13[i], end=' ')
+    print(base_reaz_13[i+1], end=' ')
+    print(base_reaz_13[i], end=' ')
+    print(base_reaz_13[i-1], end=' ')
+    print(base_reaz_13[i] * 2, end=' ')
+    print()
+    if (i == 8):
+      break
+
+#------------------------------------------
+
+def render_pattern(pattern):
+  for i in range(len(base)):
+    for j in range(len(pattern)):
+      index = i + pattern[j] - 1
+      if index >= len(base):
+        break
+    #  print(index, end='')
+      print(base[index], end='')
+    print()
+    if index >= len(base):
+      break
+  print()
+
+def render_pattern_reverse(pattern):
+  print()
+
+render_pattern([1, 2, 1])   # ਸਾਰੇਸਾ 1-2-1
+render_pattern([1, 3])      # ਸਾਰੇ 1-3
+render_pattern([1, 2, 3])   # ਸਾਰੇਗਾ 1-2-3
+
+
+#------------------------------------------
+
 if __name__ == "__main__":
   print("ਸਰਗਮ ਰਿਆਜ਼ ੧")
   reaz1()
