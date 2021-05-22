@@ -194,24 +194,28 @@ def reaz13():
 #------------------------------------------
 
 def render_pattern(pattern):
+  print(f'hight numner is : {max(pattern)}')
   for i in range(len(base)):
+      break
     for j in range(len(pattern)):
       index = i + pattern[j] - 1
-      if index >= len(base):
-        break
-    #  print(index, end='')
+      #print(index, end='')
       print(base[index], end='')
     print()
-    if index >= len(base):
-      break
-  print()
+#    print(f'{max(pattern) + i} >= {len(base)}')
+    if max(pattern) + i >= len(base):
+      print('BREAK')
+
 
 def render_pattern_reverse(pattern):
   print()
 
+
 render_pattern([1, 2, 1])   # ਸਾਰੇਸਾ 1-2-1
 render_pattern([1, 3])      # ਸਾਰੇ 1-3
 render_pattern([1, 2, 3])   # ਸਾਰੇਗਾ 1-2-3
+render_pattern([1, 2, 1, 2, 3]) #ਸਾਰੇਸਾਰੇਗਾ 1-2-1-2-3
+
 
 
 #------------------------------------------
