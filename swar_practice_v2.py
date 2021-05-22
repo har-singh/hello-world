@@ -35,7 +35,7 @@ def reaz_func(length=3):
   #default is 1-2-3
   pattern_list = []
   for i in range(length):
-    pattern_list.append(i)
+    pattern_list.append(i+1)
   return(pattern_list)
 
 
