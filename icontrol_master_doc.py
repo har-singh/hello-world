@@ -40,7 +40,7 @@ def csv_export(virtual_data_list, hostname):
     for j in range(len(data)):
       try:
         data[j] = re.sub(r'%[0-9]+:', ':', data[j])   # '/Ficus_Prova/10.182.248.95%6:443'. Removes '%6'
-        data[j] = re.sub(r'^/[a-zA-Z_]*/', '', data[j]) # '/Ficus_Pova/10.182.248.95%6:443'. Removes '/Ficus_Imp/'
+        data[j] = re.sub(r'^/[a-zA-Z_]*/', '', data[j]) # '/Ficus_Prova/10.182.248.95%6:443'. Removes '/Ficus_Prova/'
       except:
         pass
     data.append(hostname)
