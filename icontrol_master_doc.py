@@ -4,6 +4,7 @@
 # To get the pool the idea was to get the bulk first and then search internally to Python. But, for now it is easier to generate get requests for each pool
 # https://www.delftstack.com/howto/python/python-pretty-print-dictionary/
 # the get request is not working when attaching the query with backslash (\) so for now will get everthing thing and extract the information
+# https://likegeeks.com/terminating-python-scripts/
 
 import re, json, csv, datetime, getpass
 import requests
@@ -23,20 +24,41 @@ def get_request(device, username, password, url_path):
   headers = {"Content-Type": "application/json"}
   request_url = 'https://' + device + url_path
   #
-  print('Running GET request...')
+  print('Running GET ' + request_url)
   response = requests.get(request_url, auth = HTTPBasicAuth(username, password), verify=False, headers=headers)
-  print('GET request complete')  
-  #
-  response_data = response.json()
-  return(response_data)
+  if response.status_code == 200:
+    print('GET request complete')  
+    response_data = response.json()
+    return(response_data)
+  else:
+    print('HTTP request error. Reason: %s; Status Code: %s') % (response.reason, response.status_code)
+    quit(1)
 
-def csv_export(virtual_data_list, hostname):
-  # Export to CSV
-  keys = ['name', 'destination', 'pool', 'partition']
+def get_reference_path(dictionary, key_for_path):
+  # https://realpython.com/python-defaultdict/
+  # Data example:
+  # {
+  #   "name": "demo_443_pool",
+  #   "membersReference": {
+  #     "isSubcollection": true,
+  #     "link": "https://localhost/mgmt/tm/ltm/pool/~Ficus_Prova~demo_443_pool/members?ver=14.1.4"
+  #   },
+  # }
   #
-  csv_data = [['Virtual Server Name,', 'VS Destination', 'Pool Name', 'Partition','Hostname']] # list initialized with the columns names
-  for i in virtual_data_list:
-    data = [i.get(x) for x in keys]
+  value_path = ''
+  if key_for_path in dictionary:
+    value_url = dictionary[key_for_path]['link']
+    value_path = urlparse.urlparse(value_url).path
+    return(value_path)
+
+def csv_export(data_list, column_keys, hostname):
+  # Export to CSV
+  #column_keys = ['name', 'destination', 'pool', 'partition']
+  #
+  #csv_data = [['Virtual Server Name,', 'VS Destination', 'Pool Name', 'Partition','Hostname']] # list initialized with the columns names
+  csv_data = []
+  for i in data_list:
+    data = [i.get(x) for x in column_keys]
     for j in range(len(data)):
       try:
         data[j] = re.sub(r'%[0-9]+:', ':', data[j])   # '/Ficus_Prova/10.182.248.95%6:443'. Removes '%6'
@@ -46,21 +68,57 @@ def csv_export(virtual_data_list, hostname):
     data.append(hostname)
     csv_data.append(data)
   #
-  with open('/shared/tmp/hsingh/virtual_server_api_export.csv', 'w') as comma_file:
+  with open('/shared/tmp/hsingh/bigip_api_export.csv', 'w') as comma_file:
     wr = csv.writer(comma_file, quoting=csv.QUOTE_ALL)
     wr.writerows(csv_data)
     print('CSV exported.')
 
-if __name__ == "__main__":
-  device = raw_input("Provide BIG-IP Management IP: ")
-  user = raw_input("Username: ")
-  password = getpass.getpass("Password: ")
-  # Get virtual server dump
-  virtual_data_list = get_request(device, user, password, '/mgmt/tm/ltm/virtual/')
-  virtual_data_list = virtual_data_list['items']
+def csv_virtual_export(device, username, password):
+  keys = ['name', 'destination', 'pool', 'partition']
+  csv_data = [['Virtual Server Name,', 'VS Destination', 'Pool Name', 'Partition','Hostname']] # list initialized with the columns names
   #
-  # Get hostname
-  hostname = get_request(device, user, password, '/mgmt/tm/sys/global-settings?$select=hostname')['hostname']
+  virtual_data_list = get_request(device, username, password, '/mgmt/tm/ltm/virtual/')
+  virtual_data_list = virtual_data_list['items']
+  hostname = get_request(device, username, password, '/mgmt/tm/sys/global-settings?$select=hostname')['hostname']
+  #
+  csv_export(virtual_data_list, keys, hostname)
+
+def csv_pool_member_export(device, username, password):
+  keys = ['vs_name', 'vs_destination', 'pool_name', 'member_name', 'address', 'partition', 'hostname']
+  csv_data = [['Virtual Server Name', 'VS Destination', 'Pool Name', 'Pool Member', 'Node Address', 'Partition', 'Hostname']] # list initialized with the columns names
+  pool_member_data = []
+  #
+  virtual_data_list = get_request(device, username, password, '/mgmt/tm/ltm/virtual/')
+  virtual_data_list = virtual_data_list['items']
+  hostname = get_request(device, username, password, '/mgmt/tm/sys/global-settings?$select=hostname')['hostname']
+  #
+  for vs in virtual_data_list:
+    if 'poolReference' in vs:
+      pool_path = get_reference_path(vs, 'poolReference')
+      pool_data = get_request(device, username, password, pool_path)
+      if 'membersReference' in pool_data:
+        member_path = get_reference_path(pool_data, 'membersReference')
+        member_data = get_request(device, username, password, member_path)
+        member_data = member_data['items']
+        for member in member_data:
+          member_dict = {}
+          member_dict['vs_name'] = vs['name']
+          member_dict['vs_destination'] = vs['destination']
+          member_dict['pool_name'] = vs['pool']
+          member_dict['partition'] = vs['partition']
+          member_dict['member_name'] = member['name']
+          member_dict['address'] = member['address']
+          pool_member_data.append(member_dict)
+  #
+  csv_export(pool_member_data, keys, hostname)
+
+
+if __name__ == "__main__":
+  # Get access details
+  device = raw_input("Provide BIG-IP Management IP: ")
+  username = raw_input("Username: ")
+  password = getpass.getpass("Password: ")
   #
   # Export to CSV
-  csv_export(virtual_data_list, hostname)
+#  csv_virtual_export(device, username, password)
+  csv_pool_member_export(device, username, password)
