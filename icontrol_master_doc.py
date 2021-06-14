@@ -16,6 +16,7 @@ def bigip_object(i):
   switcher = {
     'virtual' : '/mgmt/tm/ltm/virtual/',
     'pool' : '/mgmt/tm/ltm/pool/',
+    'client_ssl_profile' : '/mgmt/tm/ltm/profile/client-ssl/',
     'hostname' : '/mgmt/tm/sys/global-settings?$select=hostname'
   }
   return switcher.get(i, 'Invalid object. Possible values: virtual, pool, hostname. You provided: ' + i)
@@ -25,13 +26,14 @@ def get_request(device, username, password, url_path):
   request_url = 'https://' + device + url_path
   #
   print('Running GET ' + request_url)
+  print 'Running GET ',
   response = requests.get(request_url, auth = HTTPBasicAuth(username, password), verify=False, headers=headers)
   if response.status_code == 200:
     print('GET request complete')  
     response_data = response.json()
     return(response_data)
   else:
-    print('HTTP request error. Reason: %s; Status Code: %s') % (response.reason, response.status_code)
+    print('\t\tHTTP request error. Reason: %s; Status Code: %s') % (response.reason, response.status_code)
     quit(1)
 
 def get_reference_path(dictionary, key_for_path):
@@ -51,12 +53,23 @@ def get_reference_path(dictionary, key_for_path):
     value_path = urlparse.urlparse(value_url).path
     return(value_path)
 
-def csv_export(data_list, column_keys, hostname):
+def get_ssl_profile(device, username, password, vs_dictionary, client_ssl_profile_dict):
+  profile_path = get_reference_path(vs_dictionary, 'profilesReference')
+  profile_data = get_request(device, username, password, profile_path)
+  profile_data = profile_data['items']
+  profile_client_ssl_name = ''
+  for profile in profile_data:
+    if profile['context'] == 'clientside':
+      if profile['name'] in client_ssl_profile_dict:
+        profile_client_ssl_name = profile['name']
+  return(profile_client_ssl_name)
+
+def csv_export(data_list, column_keys, hostname, csv_data):
   # Export to CSV
   #column_keys = ['name', 'destination', 'pool', 'partition']
   #
   #csv_data = [['Virtual Server Name,', 'VS Destination', 'Pool Name', 'Partition','Hostname']] # list initialized with the columns names
-  csv_data = [['Virtual Server Name', 'VS Destination', 'Pool Name', 'Pool Member', 'Node Address', 'Partition', 'Hostname']] # list initialized with the columns names
+  #csv_data = [['Virtual Server Name', 'VS Destination', 'Pool Name', 'Pool Member', 'Node Address', 'Partition', 'Hostname']] # list initialized with the columns names
   #csv_data = []
   for i in data_list:
     data = [i.get(x) for x in column_keys]
@@ -83,25 +96,32 @@ def csv_virtual_export(device, username, password):
   virtual_data_list = virtual_data_list['items']
   hostname = get_request(device, username, password, '/mgmt/tm/sys/global-settings?$select=hostname')['hostname']
   #
-  csv_export(virtual_data_list, keys, hostname)
+  csv_export(virtual_data_list, keys, hostname, csv_data)
 
 def csv_pool_member_export(device, username, password):
-  keys = ['vs_name', 'vs_destination', 'pool_name', 'member_name', 'address', 'partition']
-  csv_data = [['Virtual Server Name', 'VS Destination', 'Pool Name', 'Pool Member', 'Node Address', 'Partition', 'Hostname']] # list initialized with the columns names
   pool_member_data = []
   pool_dict = {}
+  client_ssl_profile_dict = {}
   #
-  virtual_data_list = get_request(device, username, password, '/mgmt/tm/ltm/virtual/')
-  virtual_data_list = virtual_data_list['items']
+  # Profile binary search. Pre computing the profile data for hash search
+  client_ssl_profile_list = get_request(device, username, password, '/mgmt/tm/ltm/profile/client-ssl/')['items']
+  for profile in client_ssl_profile_list:
+    client_ssl_profile_dict[profile['name']] = profile
   #
+  # Pool binary search. Computing the pool for hash search
   pool_data_list = get_request(device, username, password, '/mgmt/tm/ltm/pool/')
   pool_data_list = pool_data_list['items']
   for pool in pool_data_list:
     pool_dict[pool['fullPath']] = pool
   #
-  hostname = get_request(device, username, password, '/mgmt/tm/sys/global-settings?$select=hostname')['hostname']
+  # Fetch Virtual Server
+  virtual_data_list = get_request(device, username, password, '/mgmt/tm/ltm/virtual/')
+  virtual_data_list = virtual_data_list['items']
   #
+#  tmp = virtual_data_list; virtual_data_list=[]; virtual_data_list.append(tmp[0]); virtual_data_list.append(tmp[1])  # tempory created to fastrack the test
+  # loop to collect the pool member information. Collect the sslprofile as well
   for vs in virtual_data_list:
+    ssl_profile = get_ssl_profile(device, username, password, vs, client_ssl_profile_dict)
     if 'pool' in vs:
       pool_data = pool_dict[vs['pool']]
       if 'membersReference' in pool_data:
@@ -116,9 +136,23 @@ def csv_pool_member_export(device, username, password):
           member_dict['partition'] = vs['partition']
           member_dict['member_name'] = member['name']
           member_dict['address'] = member['address']
+          member_dict['ssl_profile'] = ssl_profile
           pool_member_data.append(member_dict)
+    else:
+      member_dict = {}
+      member_dict['vs_name'] = vs['name']
+      member_dict['vs_destination'] = vs['destination']
+      member_dict['pool_name'] = ''
+      member_dict['partition'] = vs['partition']
+      member_dict['member_name'] = ''
+      member_dict['address'] = ''
+      member_dict['ssl_profile'] = ssl_profile
+      pool_member_data.append(member_dict)
   #
-  csv_export(pool_member_data, keys, hostname)
+  csv_data = [['Virtual Server Name', 'VS Destination', 'Pool Name', 'Pool Member', 'Node Address', 'Partition', 'SSL Profile', 'Hostname']] # list initialized with the columns names
+  keys = ['vs_name', 'vs_destination', 'pool_name', 'member_name', 'address', 'partition', 'ssl_profile']
+  hostname = get_request(device, username, password, '/mgmt/tm/sys/global-settings?$select=hostname')['hostname']
+  csv_export(pool_member_data, keys, hostname, csv_data)
 
 
 if __name__ == "__main__":
