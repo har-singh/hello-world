@@ -26,14 +26,13 @@ def get_request(device, username, password, url_path):
   request_url = 'https://' + device + url_path
   #
   print('Running GET ' + request_url)
-  print 'Running GET ',
   response = requests.get(request_url, auth = HTTPBasicAuth(username, password), verify=False, headers=headers)
   if response.status_code == 200:
     print('GET request complete')  
     response_data = response.json()
     return(response_data)
   else:
-    print('\t\tHTTP request error. Reason: %s; Status Code: %s') % (response.reason, response.status_code)
+    print('HTTP request error. Reason: %s; Status Code: %s') % (response.reason, response.status_code)
     quit(1)
 
 def get_reference_path(dictionary, key_for_path):
