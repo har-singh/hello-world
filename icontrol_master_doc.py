@@ -135,6 +135,7 @@ def csv_pool_member_export(device, username, password):
           member_dict['partition'] = vs['partition']
           member_dict['member_name'] = member['name']
           member_dict['address'] = member['address']
+          member_dict['monitor'] = pool_data['monitor']
           member_dict['ssl_profile'] = ssl_profile
           pool_member_data.append(member_dict)
     else:
@@ -145,11 +146,12 @@ def csv_pool_member_export(device, username, password):
       member_dict['partition'] = vs['partition']
       member_dict['member_name'] = ''
       member_dict['address'] = ''
+      member_dict['monitor'] = ''
       member_dict['ssl_profile'] = ssl_profile
       pool_member_data.append(member_dict)
   #
-  csv_data = [['Virtual Server Name', 'VS Destination', 'Pool Name', 'Pool Member', 'Node Address', 'Partition', 'SSL Profile', 'Hostname']] # list initialized with the columns names
-  keys = ['vs_name', 'vs_destination', 'pool_name', 'member_name', 'address', 'partition', 'ssl_profile']
+  csv_data = [['Virtual Server Name', 'VS Destination', 'Pool Name', 'Pool Member', 'Node Address', 'Partition', 'Pool Monitor', 'SSL Profile', 'Hostname']] # list initialized with the columns names
+  keys = ['vs_name', 'vs_destination', 'pool_name', 'member_name', 'address', 'partition', 'monitor', 'ssl_profile']
   hostname = get_request(device, username, password, '/mgmt/tm/sys/global-settings?$select=hostname')['hostname']
   csv_export(pool_member_data, keys, hostname, csv_data)
 
