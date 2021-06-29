@@ -135,7 +135,7 @@ def csv_pool_member_export(device, username, password):
           member_dict['partition'] = vs['partition']
           member_dict['member_name'] = member['name']
           member_dict['address'] = member['address']
-          member_dict['monitor'] = pool_data['monitor']
+          member_dict['monitor'] = pool_data.get('monitor')
           member_dict['ssl_profile'] = ssl_profile
           pool_member_data.append(member_dict)
     else:
